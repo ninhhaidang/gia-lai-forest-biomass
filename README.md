@@ -152,9 +152,9 @@ Dự án này được cấp phép theo Giấy phép MIT. Vui lòng xem tệp `L
 ## Liên hệ
 
 Nếu có bất kỳ câu hỏi hoặc góp ý nào, bạn có thể liên hệ qua:
-*   [Tên của bạn/Tên nhóm]
-*   [Địa chỉ email của bạn]
-*   [Liên kết GitHub Profile của bạn (nếu có)]
+*   [Ninh Hải Đăng]
+*   [ninhhaidangg@gmail.com]
+*   [https://github.com/ninhhaidang/]
 
 ---
 *README này được tạo tự động một phần dựa trên phân tích mã nguồn.*
