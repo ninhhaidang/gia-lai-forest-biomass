@@ -155,5 +155,3 @@ Nếu có bất kỳ câu hỏi hoặc góp ý nào, bạn có thể liên hệ 
 *   email: ninhhaidangg@gmail.com
 *   Github: https://github.com/ninhhaidang/
 
----
-*README này được tạo tự động một phần dựa trên phân tích mã nguồn.*
