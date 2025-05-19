@@ -1,4 +1,14 @@
+# Loại trừ tất cả
 *
+
+# Nhưng giữ lại các file sau
+!.gitignore
 !README.md
 !LICENSE
-!.gitignore 
+!Gradient_Tree_Boosting.js
+!Random_Forest.js
+
+# Các file hệ thống macOS
+.DS_Store
+.AppleDouble
+.LSOverride 

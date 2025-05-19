@@ -9,7 +9,7 @@ Tỉnh Gia Lai có diện tích rừng và thảm thực vật đa dạng, đón
 Các mục tiêu chính của dự án bao gồm:
 *   Tiền xử lý và tạo các bộ dữ liệu viễn thám sẵn sàng cho phân tích từ ảnh Sentinel-2, dữ liệu DEM Copernicus GLO-30, và dữ liệu GEDI.
 *   Xây dựng và so sánh hiệu quả của hai mô hình học máy (Random Forest và Gradient Tree Boost) trong việc ước tính AGBD.
-*   Đánh giá ảnh hưởng của việc sử dụng các bộ chỉ số quang học khác nhau (phiên bản "mini" và "full") từ Sentinel-2 đến độ chính xác của mô hình.
+*   Đánh giá ảnh hưởng của việc sử dụng các bộ chỉ số quang học khác nhau từ Sentinel-2 đến độ chính xác của mô hình.
 *   Tạo ra các bản đồ ước tính AGBD cho tỉnh Gia Lai.
 
 ## Nguồn dữ liệu
@@ -19,7 +19,7 @@ Dự án sử dụng các nguồn dữ liệu sau trên Google Earth Engine:
 1.  **Ảnh vệ tinh Sentinel-2 SR Harmonized:**
     *   ID Collection: `COPERNICUS/S2_SR_HARMONIZED`
     *   Sử dụng để tính toán các chỉ số thực vật và đất liên quan đến sinh khối.
-    *   Dữ liệu được lọc theo khoảng thời gian từ 01/12/2022 đến 31/12/2023.
+    *   Dữ liệu được lọc theo khoảng thời gian từ 01/05/2021 đến 31/10/2021.
 2.  **Dữ liệu che phủ mây Cloud Score+:**
     *   ID Collection: `GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED`
     *   Sử dụng để loại bỏ các pixel bị ảnh hưởng bởi mây trên ảnh Sentinel-2.
@@ -34,9 +34,9 @@ Dự án sử dụng các nguồn dữ liệu sau trên Google Earth Engine:
     *   ID Collection: `LARSE/GEDI/GEDI02_A_002_MONTHLY`
     *   Sử dụng chỉ số `rh100` (Relative Height 100%) làm một trong các biến dự đoán cho mô hình.
     *   Dữ liệu được lọc theo cờ chất lượng (`quality_flag`, `degrade_flag`) và độ dốc.
-6.  **Ranh giới hành chính tỉnh Gia Lai:**
-    *   Asset ID: `projects/ee-bonglantrungmuoi/assets/gia_lai`
-    *   Sử dụng để cắt (clip) tất cả các lớp dữ liệu theo phạm vi nghiên cứu.
+6.  **Dữ liệu Sentinel-1 GRD:**
+    *   ID Collection: `COPERNICUS/S1_GRD`
+    *   Cung cấp dữ liệu radar với kênh phân cực VV và VH để bổ sung thông tin cấu trúc thực vật.
 
 ## Phương pháp luận
 
@@ -47,111 +47,102 @@ Quy trình phân tích tổng thể được thực hiện trên Google Earth En
         *   Lọc ảnh theo ngày và khu vực nghiên cứu.
         *   Áp dụng mặt nạ mây sử dụng Cloud Score+ (ngưỡng `cs >= 0.5`).
         *   Chuyển đổi giá trị pixel sang độ phản xạ (nhân với `0.0001`).
-        *   Tính toán các chỉ số quang học. Có hai bộ chỉ số được sử dụng:
-            *   **Bộ "Mini":** NDVI, MNDWI, NDBI, GCI, NDMI, CIRE, NDRE1, MTCI, S2REP.
-            *   **Bộ "Full":** Bao gồm bộ "Mini" và bổ sung EVI, BSI, SAVI, ARVI, NDRE2.
+        *   Tính toán các chỉ số quang học (NDVI, EVI, SAVI, NDMI,...)
         *   Tạo ảnh composite (median) từ các ảnh đã xử lý.
+    *   **Sentinel-1:**
+        *   Lọc ảnh theo thời gian, khu vực, và chế độ.
+        *   Áp dụng bộ lọc Gaussian để giảm nhiễu speckle.
+        *   Sử dụng kênh VV và VH.
     *   **DEM GLO-30:**
         *   Tạo mosaic DEM cho khu vực.
-        *   Tính toán lớp độ dốc (slope).
+        *   Tính toán lớp độ dốc (slope) và hướng dốc (aspect).
     *   **GEDI L4A & L2A:**
         *   Lọc dữ liệu theo thời gian, khu vực, cờ chất lượng, sai số (cho L4A) và độ dốc (ngưỡng `< 30 độ`).
         *   Tạo ảnh mosaic cho AGBD (từ L4A) và chiều cao tán cây (`rh100` từ L2A).
 
 2.  **Chuẩn bị dữ liệu cho mô hình:**
-    *   Tất cả các lớp dữ liệu (ảnh composite Sentinel-2 với các chỉ số, DEM, slope, GEDI canopy height, GEDI AGBD) được xuất thành các assets trong Google Earth Engine.
-    *   Các assets này sau đó được nạp lại, xếp chồng (stack) và resample (bilinear) về cùng độ phân giải không gian (100m, EPSG:3857) để tạo thành bộ dữ liệu đầu vào cho mô hình.
-    *   Dữ liệu huấn luyện được lấy mẫu từ các điểm GEDI L4A AGBD và các biến dự đoán tương ứng tại các điểm đó.
+    *   Các lớp dữ liệu được xuất thành assets trong Google Earth Engine.
+    *   Dữ liệu được xếp chồng (stack) và resample (bilinear) về độ phân giải không gian 100m.
+    *   Dữ liệu huấn luyện được lấy mẫu từ các điểm GEDI L4A AGBD và các biến dự đoán.
 
 3.  **Huấn luyện mô hình và Dự đoán:**
-    *   Hai thuật toán học máy được sử dụng để xây dựng mô hình hồi quy dự đoán AGBD:
+    *   Hai thuật toán học máy được sử dụng:
         *   **Random Forest (RF)**
         *   **Gradient Tree Boost (GTB)**
-    *   Mỗi thuật toán được huấn luyện với cả hai bộ chỉ số Sentinel-2 ("mini" và "full") để so sánh.
-    *   Các tham số mô hình (ví dụ: số cây, độ sâu cây) được thiết lập trong các script.
-    *   Mô hình đã huấn luyện sau đó được áp dụng lên toàn bộ ảnh stacked của khu vực Gia Lai để tạo ra bản đồ ước tính AGBD.
+    *   Mỗi mô hình sử dụng 100 cây quyết định.
+    *   Mô hình đã huấn luyện được áp dụng lên toàn bộ vùng nghiên cứu.
 
-4.  **Xuất kết quả:**
-    *   Bản đồ AGBD cuối cùng được xuất thành asset trên Google Earth Engine.
+4.  **Đánh giá và Phân tích:**
+    *   Đánh giá hiệu suất mô hình sử dụng RMSE và R².
+    *   Phân tích độ quan trọng của các biến dự đoán.
+    *   Ước tính tổng sinh khối cho toàn tỉnh.
 
-## Các Scripts trong dự án
+## Mã nguồn 
 
-Dự án bao gồm các tệp script Google Earth Engine (`.js`) sau:
+Dự án bao gồm hai mã nguồn chính:
 
-*   **`gtb-mini-data.js`**:
-    *   Thực hiện toàn bộ quy trình từ tiền xử lý dữ liệu đến ước tính AGBD.
-    *   Sử dụng bộ chỉ số Sentinel-2 **"mini"**.
-    *   Sử dụng mô hình **Gradient Tree Boost (GTB)**.
-*   **`rf-mini-data.js`**:
-    *   Tương tự như `gtb-mini-data.js` nhưng sử dụng mô hình **Random Forest (RF)**.
-    *   Sử dụng bộ chỉ số Sentinel-2 **"mini"**.
-*   **`gtb-full-data.js`**:
-    *   Thực hiện toàn bộ quy trình từ tiền xử lý dữ liệu đến ước tính AGBD.
-    *   Sử dụng bộ chỉ số Sentinel-2 **"full"** (bao gồm nhiều chỉ số hơn).
-    *   Sử dụng mô hình **Gradient Tree Boost (GTB)**.
-*   **`rf-full-data.js`**:
-    *   Tương tự như `gtb-full-data.js` nhưng sử dụng mô hình **Random Forest (RF)**.
-    *   Sử dụng bộ chỉ số Sentinel-2 **"full"**.
+*   **`Random_Forest.js`**:
+    *   Sử dụng thuật toán Random Forest để ước tính sinh khối.
+    *   Thực hiện toàn bộ quy trình từ tiền xử lý đến đánh giá mô hình.
 
-*   **`gtb-clear-mini-data.js`**: Script tiện ích để xóa các GEE assets đã được tạo bởi `gtb-mini-data.js`.
-*   **`gtb-clear-full-data.js`**: Script tiện ích để xóa các GEE assets đã được tạo bởi `gtb-full-data.js`.
-*   **`rf-clear-mini-data.js`**: Script tiện ích để xóa các GEE assets đã được tạo bởi `rf-mini-data.js`.
-*   **`rf-clear-full-data.js`**: Script tiện ích để xóa các GEE assets đã được tạo bởi `rf-full-data.js`.
-
-**Lưu ý về đường dẫn xuất (Export Path):**
-Các script chính (ví dụ: `gtb-mini-data.js`) có một biến `exportPathMini` (hoặc tương tự) được đặt là `'users/YOUR_GEE_USERNAME/YOUR_FOLDER/'`. Bạn cần **thay đổi `YOUR_GEE_USERNAME/YOUR_FOLDER`** thành đường dẫn thư mục GEE Asset của bạn trước khi chạy các script để xuất kết quả. Các script "clear" cũng sử dụng đường dẫn tương tự để xóa assets.
+*   **`Gradient_Tree_Boosting.js`**:
+    *   Sử dụng thuật toán Gradient Tree Boosting để ước tính sinh khối.
+    *   Thực hiện quy trình tương tự như Random Forest.
 
 ## Hướng dẫn sử dụng
 
 1.  **Truy cập Google Earth Engine Code Editor:** Mở [Google Earth Engine Code Editor](https://code.earthengine.google.com/).
+
 2.  **Sao chép và Dán Mã Nguồn:**
     *   Mở từng tệp `.js` trong dự án này.
     *   Sao chép toàn bộ nội dung của script.
     *   Dán vào một script mới trong GEE Code Editor.
-3.  **Chỉnh sửa Đường dẫn Xuất (Quan trọng):**
-    *   Trong các script chính (ví dụ: `gtb-mini-data.js`, `rf-full-data.js`, v.v.), tìm đến dòng định nghĩa biến `exportPath...` (ví dụ `var exportPathMini = 'users/bonglantrungmuoi/gtb-mini-data/';`).
-    *   **Thay đổi `'users/bonglantrungmuoi/...'` thành đường dẫn GEE Asset của riêng bạn** (ví dụ: `'users/TEN_USER_GEE_CUA_BAN/GiaLai_Biomass_Output/'`). Đây là nơi các kết quả trung gian và bản đồ cuối cùng sẽ được lưu.
-    *   Thực hiện tương tự cho các script `*-clear-*-data.js` nếu bạn muốn sử dụng chúng, đảm bảo đường dẫn `assetPath` khớp với nơi bạn đã lưu các assets.
-4.  **Chạy Script:** Nhấn nút "Run" trong GEE Code Editor.
-    *   Các lớp bản đồ trung gian (chỉ số, DEM, GEDI) sẽ được thêm vào cửa sổ bản đồ (Map).
+
+3.  **Cấu hình tham số (QUAN TRỌNG):**
+    *   Sau khi dán mã nguồn, bạn cần cấu hình hai tham số quan trọng:
+    
+        ```javascript
+        // CẤU HÌNH: Thay đổi thành username Google Earth Engine của bạn
+        var GEE_USERNAME = 'your_gee_username';
+        
+        // CẤU HÌNH: Đường dẫn đến shapefile của tỉnh Gia Lai (thay đổi thành asset của bạn)
+        var GIA_LAI_ASSET = 'projects/your-project-id/assets/gia_lai';
+        ```
+        
+        - Đổi `'your_gee_username'` thành tên người dùng GEE của bạn (ví dụ: `'user1234'`).
+        - Đổi `'projects/your-project-id/assets/gia_lai'` thành đường dẫn đến asset chứa ranh giới tỉnh Gia Lai mà bạn đã tải lên.
+
+4.  **Tải lên shapefile tỉnh Gia Lai:**
+    *   Bạn cần tải lên shapefile ranh giới tỉnh Gia Lai vào tài khoản Google Earth Engine của mình.
+    *   Sau khi tải lên, cập nhật biến `GIA_LAI_ASSET` với đường dẫn đến asset.
+
+5.  **Chạy Script:** Nhấn nút "Run" trong GEE Code Editor.
+    *   Các lớp bản đồ trung gian (chỉ số, DEM, GEDI) sẽ được thêm vào cửa sổ bản đồ.
     *   Quá trình huấn luyện mô hình và dự đoán có thể mất một khoảng thời gian.
-    *   Các tác vụ xuất (Export) sẽ xuất hiện trong tab "Tasks" ở phía bên phải. Bạn cần nhấn "RUN" cho từng tác vụ để thực sự lưu chúng vào GEE Assets của bạn.
-5.  **Xem Kết quả:** Sau khi các tác vụ xuất hoàn thành, bạn có thể tìm thấy các lớp dữ liệu và bản đồ sinh khối trong thư mục GEE Assets mà bạn đã chỉ định.
+    *   Các tác vụ xuất (Export) sẽ xuất hiện trong tab "Tasks". Bạn cần nhấn "RUN" cho từng tác vụ.
 
-## Cấu trúc thư mục dự án (Hiện tại)
+6.  **Xem Kết quả:** Sau khi các tác vụ xuất hoàn thành, bạn có thể tìm thấy các lớp dữ liệu và bản đồ sinh khối trong thư mục GEE Assets của bạn.
 
-Dự án hiện tại có cấu trúc phẳng, bao gồm các tệp sau trong thư mục gốc:
+## Cấu trúc thư mục dự án
 
 ```
 .
 ├── README.md
-├── gtb-clear-full-data.js
-├── gtb-clear-mini-data.js
-├── gtb-full-data.js
-├── gtb-mini-data.js
-├── rf-clear-full-data.js
-├── rf-clear-mini-data.js
-├── rf-full-data.js
-└── rf-mini-data.js
+├── LICENSE
+├── .gitignore
+├── Gradient_Tree_Boosting.js
+└── Random_Forest.js
 ```
 
 ## Công nghệ sử dụng
 
 *   **Nền tảng chính:** Google Earth Engine (GEE)
 *   **Ngôn ngữ lập trình:** JavaScript (API của GEE)
-*   **Thuật toán học máy:** Random Forest, Gradient Tree Boost (thông qua các hàm của GEE)
-
-## Đóng góp
-
-Hiện tại, dự án này chủ yếu phục vụ mục đích nghiên cứu cá nhân. Tuy nhiên, nếu bạn có ý tưởng cải tiến hoặc phát hiện lỗi, vui lòng tạo một "Issue" trên GitHub repository (nếu có).
-
-## Giấy phép
-
-Dự án này được cấp phép theo Giấy phép MIT. Vui lòng xem tệp `LICENSE` (nếu có) để biết thêm chi tiết. (Bạn nên tạo một tệp `LICENSE` với nội dung giấy phép MIT).
+*   **Thuật toán học máy:** Random Forest, Gradient Tree Boost
 
 ## Liên hệ
 
 Nếu có bất kỳ câu hỏi hoặc góp ý nào, bạn có thể liên hệ qua:
-*   email: ninhhaidangg@gmail.com
+*   Email: ninhhaidangg@gmail.com
 *   Github: https://github.com/ninhhaidang/
 
