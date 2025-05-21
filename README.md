@@ -1,4 +1,4 @@
-# Dự án Phân tích Sinh khối (Biomass) tỉnh Gia Lai sử dụng Google Earth Engine
+# Ứng dụng GIS, Viễn thám và Machine learning trong Ước tính sinh khối tỉnh Gia Lai
 
 Dự án này tập trung vào việc ước tính và lập bản đồ Sinh khối Trên mặt đất (Aboveground Biomass - AGBD) tại tỉnh Gia Lai, Việt Nam, bằng cách sử dụng dữ liệu viễn thám đa nguồn và các thuật toán học máy trên nền tảng Google Earth Engine (GEE).
 
