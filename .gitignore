@@ -36,7 +36,3 @@ __pycache__/
 *.jpg
 *.jpeg
 *.svg
-
-# Loại trừ các file dữ liệu lớn
-*.tif
-*.csv
