@@ -7,8 +7,36 @@
 !LICENSE
 !Gradient_Tree_Boosting.js
 !Random_Forest.js
+!/data
 
 # Các file hệ thống macOS
 .DS_Store
 .AppleDouble
-.LSOverride 
+.LSOverride
+
+# Loại trừ các file Python biên dịch
+__pycache__/
+*.pyc
+
+# Loại trừ các file LaTeX tạm thời
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Loại trừ các file hình ảnh tạm thời
+*.png
+*.jpg
+*.jpeg
+*.svg
+
+# Loại trừ các file dữ liệu lớn
+*.tif
+*.csv
